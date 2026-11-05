@@ -1,0 +1,104 @@
+# Base case: Hybrid Annuity Model road (illustrative). HAM inputs follow README §8.6; the cost, debt and
+# O&M inputs are illustrative assumptions, not data from a real project.
+# Units: ₹ crore; rates and shares as decimals.
+#
+# The Authority pays 40% of the Bid Project Cost (BPC) during construction and the remaining 60%
+# (indexed to COD) as 30 semi-annual instalments with interest on the reducing balance, plus indexed
+# O&M payments. Revenue never depends on traffic, and payments depend on the BID cost, so an actual
+# cost overrun is borne by debt and equity.
+
+project:
+  name: "HAM road - illustrative"
+  type: ham
+  first_fiscal_year: 2026
+
+timeline:
+  construction_years: 2
+  concession_years: 17               # Tc + 15 years of operation (README §8.1)
+  # HAM annuities are a fixed number of instalments after COD, so this model ties the operations
+  # period to COD (a delay moves the end date). Verify against the applicable Model Concession Agreement.
+  concession_end_fixed: false
+  indexation_basis: cod
+
+capex:
+  base_cost: 900.0                   # actual EPC cost at bid-date prices: 90% of BPC (the bid includes a margin)
+  phasing: [0.40, 0.60]
+  escalation: 0.05                   # matches PIM inflation, so construction support tracks cost
+  contingency: 0.0
+  preop: 0.0
+
+funding:
+  gearing: 0.75                      # gearing cap on (TPC - construction support); DSCR sizing may cut it
+  grant_pct: 0.0                     # HAM: the construction support below is the grant
+  grant_covers_overrun: false
+  equity_mode: pro_rata
+  drawdown_timing: 0.5
+  upfront_fee: 0.0
+
+debt:
+  interest_rate: 0.0875
+  tenor_years: 13                    # repaid by op year 13: 2-year tail inside the 15-year annuity period
+  moratorium_years: 0
+  profile: sculpted                  # HAM receipts decline (interest on a reducing balance), so DS follows CFADS
+  structured_pct: [0.050, 0.055, 0.060, 0.065, 0.070, 0.070, 0.075, 0.080, 0.080,
+                   0.085, 0.090, 0.105, 0.115]
+  target_dscr: 1.20                  # HAM / annuity lenders: 1.10-1.20x
+  sizing: gearing_and_dscr           # debt = min(gearing limit, DSCR limit): annuity-backed loans are DSCR-sized
+  sculpt_negative_principal: floor
+
+reserves:
+  dsra_months: 0
+  dsra_initial_funding: cash_flow
+  mmra_enabled: false
+  mmra_position: after_debt_service
+  lockup_dscr: null
+
+revenue:
+  ham:
+    bid_project_cost: 1000.0         # BPC at bid-date prices
+    construction_support_pct: 0.40   # paid during construction, by milestone
+    support_milestones: null         # null = follows the capex phasing (physical progress)
+    annuity_instalments: 30          # semi-annual over 15 years
+    instalments_per_year: 2
+    # Set by the applicable Model Concession Agreement (a benchmark rate plus a spread). 8.75% is an
+    # illustrative assumption equal to the loan rate; it is held fixed here, so the rate +100 bp scenario
+    # shows the loan-vs-annuity spread risk of README §9.5.3 (in practice the annuity rate partly floats).
+    annuity_interest_rate: 0.0875
+    om_payment: 12.0                 # bid O&M payment in op-year-1 prices, indexed by PIM
+    pim_inflation: 0.05
+
+opex:
+  om_base: 7.0
+  om_escalation: 0.05
+  mmr_base: 20.0                     # periodic renewal (resurfacing), op-year-1 prices
+  mmr_years: [6, 12]
+  concession_fee_pct: 0.0
+  concession_premium: 0.0
+  premium_escalation: 0.0
+
+tax:
+  rate: 0.2517
+  depreciation_years: null
+  depreciation_net_of_grant: true    # construction support treated like a capital grant
+  loss_carry_forward_years: null
+
+valuation:
+  discount_rate: 0.11
+  equity_hurdle: 0.14                # lower-risk annuity asset
+  terminal_value: 0.0
+
+covenants:
+  min_dscr: 1.15                     # HAM / annuity: 1.10-1.20x (README §3.3)
+  min_llcr: 1.20
+
+stress:
+  demand_shortfall: 0.0
+  cost_overrun: 0.0
+  overrun_funding: pro_rata
+  delay_years: 0
+  delay_phasing: null
+  rate_shock: 0.0
+
+solver:
+  tolerance: 1.0e-10
+  max_iterations: 200

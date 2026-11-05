@@ -1,0 +1,98 @@
+# Base case: PPP metro line (illustrative). Revenue inputs follow README §8.5; the cost, funding and
+# debt inputs are illustrative assumptions for a ~10 km elevated line, not data from a real project.
+# Units: ₹ crore; rates and shares as decimals; ridership in passengers/day; fare in ₹ per trip.
+# Teaching point (README §9.5.2): fare-box revenue alone does not cover the capex. Run this case
+# with funding.grant_pct = 0 to see the project fail without Viability Gap Funding.
+
+project:
+  name: "PPP metro line - illustrative"
+  type: metro
+  first_fiscal_year: 2026
+
+timeline:
+  construction_years: 5
+  concession_years: 35               # operations 30 years
+  concession_end_fixed: true
+  indexation_basis: cod
+
+capex:
+  base_cost: 2200.0                  # hard cost at today's prices (~₹220 Cr/km x 10 km)
+  phasing: [0.10, 0.20, 0.30, 0.25, 0.15]
+  escalation: 0.05
+  contingency: 0.03
+  preop: 0.02
+
+funding:
+  gearing: 0.60                      # lower leverage for ridership risk
+  grant_pct: 0.40                    # VGF: up to 20% Centre + 20% sponsoring authority (README §4)
+  grant_covers_overrun: false
+  equity_mode: pro_rata
+  drawdown_timing: 0.5
+  upfront_fee: 0.0075                # 0.75% of debt at COD
+
+debt:
+  interest_rate: 0.090
+  tenor_years: 18
+  moratorium_years: 2                # metros need a grace period while ridership ramps up
+  profile: structured
+  # rising profile over 18 years, sums to 100%
+  structured_pct: [0.020, 0.025, 0.030, 0.035, 0.040, 0.045, 0.050, 0.055, 0.060,
+                   0.060, 0.065, 0.065, 0.070, 0.070, 0.075, 0.075, 0.080, 0.080]
+  target_dscr: 1.30
+  sizing: gearing
+  sculpt_negative_principal: floor
+
+reserves:
+  dsra_months: 6
+  dsra_initial_funding: construction # funded in project cost at COD
+  mmra_enabled: false
+  mmra_position: after_debt_service
+  lockup_dscr: 1.10
+
+revenue:
+  metro:
+    ridership: 300000                # at COD, mature level before ramp-up (README §8.5)
+    growth: 0.03
+    fare: 30.0
+    fare_revision_pct: 0.10          # +10% ...
+    fare_revision_every: 3           # ... every 3 years
+    ramp_up: [0.50, 0.65, 0.80, 0.90, 1.00]
+    non_fare_pct: 0.15
+    capacity: 550000                 # passengers/day from the rolling-stock plan
+    days_per_year: 365
+
+opex:
+  om_base: 60.0
+  om_escalation: 0.05
+  mmr_base: 120.0                    # rolling-stock overhaul and systems renewal, op-year-1 prices
+  mmr_years: [10, 20]
+  concession_fee_pct: 0.0
+  concession_premium: 0.0
+  premium_escalation: 0.0
+
+tax:
+  rate: 0.2517
+  depreciation_years: null
+  depreciation_net_of_grant: true
+  loss_carry_forward_years: null
+
+valuation:
+  discount_rate: 0.12
+  equity_hurdle: 0.15
+  terminal_value: 0.0
+
+covenants:
+  min_dscr: 1.25                     # metro: 1.25-1.35x (README §3.3)
+  min_llcr: 1.35
+
+stress:
+  demand_shortfall: 0.0
+  cost_overrun: 0.0
+  overrun_funding: pro_rata
+  delay_years: 0
+  delay_phasing: null
+  rate_shock: 0.0
+
+solver:
+  tolerance: 1.0e-10
+  max_iterations: 200

@@ -1,0 +1,106 @@
+# Scenario overrides (README §10.1). A scenario = base inputs + a few overrides, deep-merged onto a
+# fresh copy of the base, which is never modified. Keys mirror the base YAML files.
+#   overrides: applied to every project type
+#   by_type:   applied only to that project type (used where the right override differs by type)
+#
+# README shorthand -> YAML: short -> stress.demand_shortfall, overrun -> stress.cost_overrun,
+# overrun_mode -> stress.overrun_funding, delay_years -> stress.delay_years,
+# r: 0.11 -> stress.rate_shock: 0.01 (+100 bp on whatever the base rate is), ramp -> revenue.<type>.ramp_up
+
+scenarios:
+  base:
+    label: "Base case"
+    description: "Base assumptions, no stress."
+    overrides: {}
+
+  traffic_m10:
+    label: "Traffic -10%"
+    description: "Traffic (toll) or ridership (metro) 10% below forecast. No effect on HAM revenue by design."
+    overrides: {stress: {demand_shortfall: 0.10}}
+
+  traffic_m20:
+    label: "Traffic -20%"
+    description: "Traffic or ridership 20% below forecast."
+    overrides: {stress: {demand_shortfall: 0.20}}
+
+  traffic_m30:
+    label: "Traffic -30%"
+    description: "Traffic or ridership 30% below forecast."
+    overrides: {stress: {demand_shortfall: 0.30}}
+
+  slow_rampup:
+    label: "Slow ramp-up"
+    description: "Users adopt the new facility more slowly. HAM revenue has no ramp-up, so HAM is unaffected."
+    by_type:
+      toll: {revenue: {toll: {ramp_up: [0.70, 0.80, 0.90, 1.00]}}}
+      metro: {revenue: {metro: {ramp_up: [0.35, 0.50, 0.65, 0.80, 0.90, 1.00]}}}
+
+  cost_p10:
+    label: "Cost +10%"
+    description: "Hard-cost overrun of 10%, funded pro-rata (debt and equity at the base gearing)."
+    overrides: {stress: {cost_overrun: 0.10}}
+
+  cost_p20:
+    label: "Cost +20%"
+    description: "Hard-cost overrun of 20%, funded pro-rata."
+    overrides: {stress: {cost_overrun: 0.20}}
+
+  cost_p20_equity:
+    label: "Cost +20% (equity-funded)"
+    description: "Hard-cost overrun of 20%, funded entirely by the sponsor; debt unchanged."
+    overrides: {stress: {cost_overrun: 0.20, overrun_funding: equity}}
+
+  delay_1yr:
+    label: "Delay 1 year"
+    description: "Construction takes one year longer; the concession end date stays fixed (toll, metro)."
+    overrides: {stress: {delay_years: 1}}
+
+  rate_p100bp:
+    label: "Rate +100 bp"
+    description: "All-in interest rate 100 basis points higher (construction and operations)."
+    overrides: {stress: {rate_shock: 0.01}}
+
+  combined_down:
+    label: "Combined downside"
+    description: "Traffic -20% and cost +20% (pro-rata) together."
+    overrides: {stress: {demand_shortfall: 0.20, cost_overrun: 0.20}}
+
+sensitivity:
+  two_way:                           # README §10.3: traffic shortfall x cost overrun -> min DSCR
+    shortfalls: [0.0, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30]
+    overruns: [0.0, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30]
+  tornado:                           # README §10.3: each input moved by +/- shock, one at a time
+    shock: 0.10                      # relative: 0.10 = +/-10% of the base value
+    variables:
+      toll:
+        - {label: "Traffic (AADT)", path: revenue.toll.aadt}
+        - {label: "Toll rate", path: revenue.toll.rate}
+        - {label: "Traffic growth", path: revenue.toll.growth}
+        - {label: "Hard cost", path: capex.base_cost}
+        - {label: "Interest rate", path: debt.interest_rate}
+        - {label: "Gearing", path: funding.gearing}
+        - {label: "O&M cost", path: opex.om_base}
+        - {label: "Major maintenance", path: opex.mmr_base}
+        - {label: "Tax rate", path: tax.rate}
+      metro:
+        - {label: "Ridership", path: revenue.metro.ridership}
+        - {label: "Fare", path: revenue.metro.fare}
+        - {label: "Ridership growth", path: revenue.metro.growth}
+        - {label: "Non-fare revenue", path: revenue.metro.non_fare_pct}
+        - {label: "Hard cost", path: capex.base_cost}
+        - {label: "Grant / VGF", path: funding.grant_pct}
+        - {label: "Interest rate", path: debt.interest_rate}
+        - {label: "Gearing", path: funding.gearing}
+        - {label: "O&M cost", path: opex.om_base}
+      ham:
+        - {label: "Hard cost (not BPC)", path: capex.base_cost}
+        - {label: "Annuity interest rate", path: revenue.ham.annuity_interest_rate}
+        - {label: "Loan interest rate", path: debt.interest_rate}
+        - {label: "O&M payment", path: revenue.ham.om_payment}
+        - {label: "O&M cost", path: opex.om_base}
+        - {label: "Major maintenance", path: opex.mmr_base}
+        - {label: "Gearing", path: funding.gearing}
+        - {label: "Tax rate", path: tax.rate}
+  break_even:
+    max_shortfall: 0.95              # search range for the break-even traffic shortfall
+    tolerance: 1.0e-7
