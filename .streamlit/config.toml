@@ -1,0 +1,33 @@
+# Streamlit theme for app/dashboard.py. Colours follow the validated data-viz reference palette
+# (categorical slots checked for colour-blind separation in light and dark mode).
+
+[browser]
+gatherUsageStats = false
+
+[client]
+toolbarMode = "viewer"
+
+[theme]
+font = "sans-serif"
+baseRadius = "0.5rem"
+showWidgetBorder = true
+metricValueFontSize = "1.75rem"
+metricValueFontWeight = 600
+
+[theme.light]
+primaryColor = "#2a78d6"
+backgroundColor = "#fcfcfb"
+secondaryBackgroundColor = "#f3f2ee"
+textColor = "#0b0b0b"
+borderColor = "#e1e0d9"
+linkColor = "#256abf"
+chartCategoricalColors = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6", "#e34948"]
+
+[theme.dark]
+primaryColor = "#3987e5"
+backgroundColor = "#1a1a19"
+secondaryBackgroundColor = "#262624"
+textColor = "#f0efec"
+borderColor = "#383835"
+linkColor = "#5598e7"
+chartCategoricalColors = ["#3987e5", "#d95926", "#199e70", "#c98500", "#d55181", "#008300", "#9085e9", "#e66767"]
